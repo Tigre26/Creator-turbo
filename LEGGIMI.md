@@ -54,7 +54,7 @@ Limiti di temperatura applicati subito: ugelli 320 °C, piatto 125 °C, camera 7
 
 ## Installazione (dopo OpenCreator e la prima stampa di prova)
 
-0. **Da GitHub (consigliato, dal 06/11/2026):** il plugin è su https://github.com/tigre26/creator-turbo. Una volta sola: `strumenti\installa-plugin-da-github.bat` (sul PC, nella cartella del progetto). Dopo, gli aggiornamenti compaiono in Fluidd tra gli aggiornamenti software come `oc-plugin-creator-turbo`: basta premere Aggiorna.
+0. **Da GitHub (consigliato, dal 06/11/2026):** il plugin è su https://github.com/Tigre26/Creator-turbo. Una volta sola: `strumenti\installa-plugin-da-github.bat` (sul PC, nella cartella del progetto). Dopo, gli aggiornamenti compaiono in Fluidd tra gli aggiornamenti software come `oc-plugin-creator-turbo`: basta premere Aggiorna.
 0. Senza GitHub: doppio clic su `strumenti\installa-plugin.bat` (copia + installazione, chiede solo la password). Per tornare indietro: `strumenti\togli-plugin.bat`.
 1. A mano: copiare la cartella `plugin` sulla stampante, per esempio in `/usr/data/creator-turbo` (WinSCP o
    `scp -r plugin opencreator@<IP>:/usr/data/creator-turbo`).
