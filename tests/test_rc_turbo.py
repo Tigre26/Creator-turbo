@@ -617,6 +617,39 @@ class Macro(unittest.TestCase):
             printer=P(p), params=params, rawparams='',
             action_raise_error=errore, action_respond_info=lambda m: '')
 
+    def linea(self, poligoni, params=None):
+        p = self.printer()
+        p['gcode_macro _KAMP_Settings'] = {
+            'purge_amount': 20., 'purge_height': 0.2, 'tip_distance': 1.2,
+            'purge_margin': 10., 'flow_rate': 12.}
+        p['toolhead']['max_velocity'] = 600.
+        p['exclude_object'] = {'objects': [{'polygon': q} for q in poligoni]}
+        sez = 'gcode_macro LINE_PURGE'
+        var = {k[9:]: float(self.cp.get(sez, k))
+               for k in self.cp.options(sez) if k.startswith('variable_')}
+        return self.macro('LINE_PURGE').render(
+            printer=p, params=params or {}, action_respond_info=lambda m: '',
+            **var)
+
+    def test_linea_davanti_a_destra(self):
+        out = self.linea([[[100, 100], [130, 100], [130, 130], [100, 130]]])
+        self.assertIn('G0 X226.0 Y5.0', out)
+        self.assertIn('G1 X246.0 E20.0', out)
+
+    def test_linea_a_sinistra_se_destra_occupata(self):
+        out = self.linea([[[200, 2], [250, 2], [250, 40], [200, 40]]])
+        self.assertIn('G0 X10.0 Y5.0', out)
+
+    def test_linea_adattiva_se_davanti_pieno(self):
+        out = self.linea([[[2, 2], [254, 2], [254, 40], [2, 40]]])
+        self.assertNotIn('Y5.0', out)
+        self.assertIn('G1 Y', out)        # lungo Y a sinistra del pezzo
+
+    def test_linea_altre_testine_piu_indietro(self):
+        out = self.linea([[[100, 100], [130, 100], [130, 130], [100, 130]]],
+                         {'MARGIN': '18'})
+        self.assertIn('G0 X226.0 Y13.0', out)
+
     def test_pulisci_non_scende_in_stampa(self):
         out = self.render('_RC_PULISCI', {})
         self.assertIn('G1 Z40.2 F600', out)        # esce alla quota del pezzo

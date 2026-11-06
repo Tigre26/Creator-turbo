@@ -1,8 +1,8 @@
 # Creator Turbo – plugin OpenCreator
 
-Versione 0.4.5 (06/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
+Versione 0.4.6 (06/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
 temperatura, cambio testina più dolce, attesa piatto, torre riconosciuta dal file, tempi. Le funzioni spente
-(carico, tabelle Z, taratura ugello, mesh di riserva) sono controllate solo a secco: 37 prove simulate, macro
+(carico, tabelle Z, taratura ugello, mesh di riserva) sono controllate solo a secco: 41 prove simulate, macro
 generate con lo stesso motore di Kalico.
 
 ## Cosa c'è
@@ -42,6 +42,7 @@ Limiti di temperatura applicati subito: ugelli 320 °C, piatto 125 °C, camera 7
 
 ## Comandi
 
+- **Linea di innesco** (`LINE_PURGE`, sostituisce quella di KAMP): fissa davanti, 5 mm dal bordo anteriore, X 226–246; se lì c'è un pezzo va a sinistra (X 10–30), se anche lì è occupato torna adattiva davanti al pezzo. Posizione nelle variabili `variable_y`, `variable_x_destra`, `variable_x_sinistra` della macro.
 - `RC_STATO` – interruttori, torre, tabella Z, temperature massime effettive.
 - `RC_Z_TESTINA [TESTINA=1..4] [Z=mm | AGGIUNGI=mm]` – correzione Z fissa per testina, fuori stampa (negativo = più schiacciato, limite ±0,3 mm). È lo stesso valore che OpenCreator aggiorna con il baby-step in stampa (`zoffset.json`); senza parametri mostra i valori. Esempio: `RC_Z_TESTINA TESTINA=4 AGGIUNGI=-0.02`.
 - `CARICA_1…CARICA_4` [TEMP=] [MATERIAL=] – senza parametri apre una finestra (schermo e Fluidd) per scegliere il materiale che si sta montando (PLA, PETG, ASA, ABS, TPU, PC; evidenziato quello di prima): lo imposta sulla bobina e scalda a temperatura del materiale + 30 °C. Con `MATERIAL=` o `TEMP=` parte subito.
