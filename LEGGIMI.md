@@ -1,8 +1,8 @@
 # Creator Turbo – plugin OpenCreator
 
-Versione 0.4.6 (06/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
+Versione 0.5.0 (06/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
 temperatura, cambio testina più dolce, attesa piatto, torre riconosciuta dal file, tempi. Le funzioni spente
-(carico, tabelle Z, taratura ugello, mesh di riserva) sono controllate solo a secco: 41 prove simulate, macro
+(carico, tabelle Z, taratura ugello, mesh di riserva) sono controllate solo a secco: 43 prove simulate, macro
 generate con lo stesso motore di Kalico.
 
 ## Cosa c'è
@@ -34,7 +34,7 @@ cambia questi nomi, in `klippy.log` compare "rc_turbo: comando … non trovato" 
 | `tabella_z_piatto` | spento | Z offset dalla tabella tarata con `RC_TARA_Z` (servono ≥ 2 punti) |
 | `tabella_z_ugello` | spento | Z offset dell'ugello per testina dalla tabella di `RC_TARA_UGELLO` invece della stima (T − 120) × 0,00045 |
 | `riserva_mesh` | spento | A livellamento spento carica `rc_base` invece di `default` |
-| `preriscaldo_partenza` | acceso | Durante homing e riscaldo piatto le testine che OpenCreator porta a 100 °C salgono a 150 °C (mai oltre la temperatura di stampa): partenza più corta, stesse 2 testine |
+| `preriscaldo_partenza` | acceso | Dall'homing fino alla mesh le testine che OpenCreator porta a 100 °C salgono a 150 °C (mai oltre la temperatura di stampa): partenza più corta, stesse 2 testine |
 | `piatto_giu_fine` | acceso | A fine stampa il piatto scende di 50 mm (`piatto_giu_mm`), al massimo fino al limite di OpenCreator (Z 246) se il pezzo è alto. Serve l'interruttore "Lower Bed On End" acceso |
 | `piatto_caldo_mm` | −0,01 | Con il piatto da 100 °C in su sostituisce il −0,08 mm fisso di OpenCreator (negativo = ugello più vicino). Primo strato ASA ancora schiacciato → verso 0; linee staccate → più negativo |
 
@@ -42,6 +42,7 @@ Limiti di temperatura applicati subito: ugelli 320 °C, piatto 125 °C, camera 7
 
 ## Comandi
 
+- **Riscaldo finale sopra il silicone** (`SMART_PARK`, sostituisce quello di KAMP): la testina va a scaldarsi 3 mm sopra il wiper davanti a destra, con lo stesso percorso del raffreddamento di OpenCreator, invece che sopra il piatto vicino al pezzo.
 - **Linea di innesco** (`LINE_PURGE`, sostituisce quella di KAMP): fissa davanti, 5 mm dal bordo anteriore, X 226–246; se lì c'è un pezzo va a sinistra (X 10–30), se anche lì è occupato torna adattiva davanti al pezzo. Posizione nelle variabili `variable_y`, `variable_x_destra`, `variable_x_sinistra` della macro.
 - `RC_STATO` – interruttori, torre, tabella Z, temperature massime effettive.
 - `RC_Z_TESTINA [TESTINA=1..4] [Z=mm | AGGIUNGI=mm]` – correzione Z fissa per testina, fuori stampa (negativo = più schiacciato, limite ±0,3 mm). È lo stesso valore che OpenCreator aggiorna con il baby-step in stampa (`zoffset.json`); senza parametri mostra i valori. Esempio: `RC_Z_TESTINA TESTINA=4 AGGIUNGI=-0.02`.

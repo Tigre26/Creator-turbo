@@ -650,6 +650,29 @@ class Macro(unittest.TestCase):
                          {'MARGIN': '18'})
         self.assertIn('G0 X226.0 Y13.0', out)
 
+    def test_riscaldo_sopra_il_silicone(self):
+        p = self.printer()
+        p['toolhead']['max_velocity'] = 600.
+        p['gcode_move']['gcode_position']['z'] = 1.0
+        out = self.macro('SMART_PARK').render(
+            printer=p, params={}, action_respond_info=lambda m: '', z=3.)
+        righe = [l.strip() for l in out.splitlines() if l.strip()]
+        i = righe.index('G90')
+        self.assertEqual(righe[i + 1:i + 6],
+                         ['G1 Z3.0 F600', 'G1 X250.0 F18000.0',
+                          'G1 Y13.8 F6000', 'G1 X266.5 F3000',
+                          'G1 Z3.0 F600'])
+
+    def test_preriscaldo_fino_alla_mesh(self):
+        turbo, *_ = make({'preriscaldo_partenza': True})
+        turbo.temp_testine = {0: 265., 1: 90.}
+        turbo.in_partenza, turbo.mesh_fatta = True, False
+        self.assertEqual(turbo._temp_preriscaldo('extruder', 100.), 150.)
+        self.assertEqual(turbo._temp_preriscaldo('extruder1', 90.), 90.)
+        self.assertEqual(turbo._temp_preriscaldo('extruder', 265.), 265.)
+        turbo.mesh_fatta = True
+        self.assertEqual(turbo._temp_preriscaldo('extruder', 100.), 100.)
+
     def test_pulisci_non_scende_in_stampa(self):
         out = self.render('_RC_PULISCI', {})
         self.assertIn('G1 Z40.2 F600', out)        # esce alla quota del pezzo

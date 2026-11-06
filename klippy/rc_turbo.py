@@ -173,6 +173,7 @@ class RCTurbo:
 
         # --- stato --------------------------------------------------------
         self.in_partenza = False
+        self.mesh_fatta = False
         self.in_cambio = False
         self.pronte = set()          # testine gia' spurgate in questa stampa
         self.temp_testine = {}       # temperature di stampa dal file
@@ -254,8 +255,8 @@ class RCTurbo:
         self._aggancia('C5_BED_SOAK', self._attorno_attesa_piatto)
         self._aggancia('C5_HOME_FOR_PRINT', self._attorno_homing)
         self._aggancia('C5_LOWER_BED', self._attorno_piatto_giu)
-        for nome, etichetta in (('BED_MESH_CALIBRATE', 'mesh'),
-                                ('LINE_PURGE', 'linea di innesco'),
+        self._aggancia('BED_MESH_CALIBRATE', self._attorno_mesh)
+        for nome, etichetta in (('LINE_PURGE', 'linea di innesco'),
                                 ('C5_TOOL_PURGE', 'spurgo')):
             self._aggancia(nome, self._solo_tempo(etichetta))
         tc = self.printer.lookup_object('creator5_toolchanger', None)
@@ -336,6 +337,24 @@ class RCTurbo:
                     nome.replace(';', ','), fase, secondi))
         except Exception:
             logging.exception('rc_turbo: scrittura tempi')
+
+    def _attorno_mesh(self, vecchio, gcmd):
+        try:
+            self._solo_tempo('mesh')(vecchio, gcmd)
+        finally:
+            self.mesh_fatta = True
+
+    def _temp_preriscaldo(self, nome, temp):
+        # OpenCreator, in partenza e fino alla mesh, porta le testine a
+        # min(100 C, stampa). Con il preriscaldo acceso: min(150 C, stampa).
+        # Dopo la mesh (testine in attesa, riscaldo finale) non si tocca.
+        if (not self.preriscaldo_partenza or not self.in_partenza
+                or self.mesh_fatta or nome not in EXTRUDERS):
+            return temp
+        stampa = self.temp_testine.get(tool_of(nome), 0.)
+        if stampa > 100. and abs(temp - min(100., stampa)) < 0.5:
+            return min(self.preriscaldo_temp, stampa)
+        return temp
 
     def _attorno_homing(self, vecchio, gcmd):
         # OpenCreator, prima dell'homing di partenza, porta la testina di
@@ -428,6 +447,7 @@ class RCTurbo:
         nome = heater.get_name()
         if nome not in EXTRUDERS:
             return self.orig_set_temperature(heater, temp, wait)
+        temp = self._temp_preriscaldo(nome, temp)
         # Un nuovo comando sostituisce quello in coda per lo stesso ugello
         self.in_coda.pop(nome, None)
         attuale, _ = heater.get_temp(self._ora())
@@ -568,6 +588,7 @@ class RCTurbo:
         tool = int(p.get('TOOL', '0') or 0)
         hotend = float(p.get('HOTEND', '0') or 0)
         self.temp_testine = {}
+        self.mesh_fatta = False
         for i in range(4):
             try:
                 self.temp_testine[i] = float(p.get('HOTEND%d' % i, hotend))
