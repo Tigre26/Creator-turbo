@@ -1,7 +1,7 @@
 {
   "id": "creator-turbo",
   "name": "Creator Turbo",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Logica di Riccardo per la Creator 5 Pro: limite ugelli, guardia camera, spurgo alla prima presa, carico filamento, tabella Z del piatto, tempi.",
   "author": "Riccardo",
   "klippy_extras": ["klippy/rc_turbo.py"],

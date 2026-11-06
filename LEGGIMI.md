@@ -1,8 +1,8 @@
 # Creator Turbo – plugin OpenCreator
 
-Versione 0.4.0 (05/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
+Versione 0.4.1 (06/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
 temperatura, cambio testina più dolce, attesa piatto, torre riconosciuta dal file, tempi. Le funzioni spente
-(carico, tabelle Z, taratura ugello, mesh di riserva) sono controllate solo a secco: 35 prove simulate, macro
+(carico, tabelle Z, taratura ugello, mesh di riserva) sono controllate solo a secco: 36 prove simulate, macro
 generate con lo stesso motore di Kalico.
 
 ## Cosa c'è
@@ -43,7 +43,7 @@ Limiti di temperatura applicati subito: ugelli 320 °C, piatto 125 °C, camera 7
 
 - `RC_STATO` – interruttori, torre, tabella Z, temperature massime effettive.
 - `RC_Z_TESTINA [TESTINA=1..4] [Z=mm | AGGIUNGI=mm]` – correzione Z fissa per testina, fuori stampa (negativo = più schiacciato, limite ±0,3 mm). È lo stesso valore che OpenCreator aggiorna con il baby-step in stampa (`zoffset.json`); senza parametri mostra i valori. Esempio: `RC_Z_TESTINA TESTINA=4 AGGIUNGI=-0.02`.
-- `CARICA_1…CARICA_4` [TEMP=] [MATERIAL=] – temperatura = tabella materiale (o materiale della bobina in AFC, o TEMP) + 30 °C.
+- `CARICA_1…CARICA_4` [TEMP=] [MATERIAL=] – senza parametri apre una finestra (schermo e Fluidd) per scegliere il materiale che si sta montando (PLA, PETG, ASA, ABS, TPU, PC; evidenziato quello di prima): lo imposta sulla bobina e scalda a temperatura del materiale + 30 °C. Con `MATERIAL=` o `TEMP=` parte subito.
 - `RC_TARA_Z TEMP=60 [TOOL=0] [HOTEND=220]` → baby-step mentre stampa il quadrato → `RC_TARA_Z_QUADRATO` (ne stampa un altro a fianco) → `RC_TARA_Z_SALVA` / `RC_TARA_Z_ANNULLA`. `RC_TABELLA_Z [CANCELLA=60|TUTTO]`.
 - `RC_TARA_UGELLO TOOL=n BUILDPLATE_REMOVED=1` (oppure `TOOLS=0,2` o `TOOLS=ALL`, una testina dopo l'altra; si rifà solo per la testina a cui cambi l'ugello, o quando a inizio stampa compare il promemoria dopo 500 ore di stampa di quella testina) – filamento tolto (consigliato), homing, piatto spento e tolto, punta pulita: tocchi sul piattello a freddo → 300 → 260 → 220 °C → freddo (dal più caldo: una sola salita, raffreddamento finale più breve); in mezzo interpolazione. Si scarta da sola se i tocchi non tornano. Valori oltre ±0,15 mm rifiutati (anche per il piatto). `RC_TABELLA_Z CANCELLA_UGELLO=1`.
 - `TARA_UGELLO_1…TARA_UGELLO_4`, `TARA_UGELLO_TUTTE` – **procedura guidata a finestre** (Fluidd: Macro; schermo: Console → Macro): avvisa se c'è filamento, fa l'homing con il piatto montato, poi chiede di togliere il piatto, alla fine dice l'esito e ricorda di rimontarlo. La prima volta da Fluidd, per leggere i messaggi e avere l'arresto di emergenza a portata.

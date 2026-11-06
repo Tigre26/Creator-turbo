@@ -612,13 +612,27 @@ class Macro(unittest.TestCase):
         self.assertIn('G1 X266.5 F3000', out)
         self.assertIn('SET_FAN_SPEED FAN=fanM106 SPEED=0.4', out)  # ripristino
 
-    def test_carica_materiale_da_afc(self):
+    def test_carica_chiede_materiale(self):
         out = self.render('RC_CARICA', {'TOOL': '1'})
-        self.assertIn('_RC_CARICA_ESEGUI TOOL=1 TEMP=270.0', out)  # 240+30
-        out = self.render('RC_CARICA', {'TOOL': '0'})
+        self.assertNotIn('_RC_CARICA_ESEGUI', out)       # prima chiede
+        self.assertIn('action:prompt_begin Carica testina 2', out)
+        self.assertIn('PETG (270 C)|RC_CARICA TOOL=1 MATERIAL=PETG SCELTO=1'
+                      '|primary', out)                   # quello di prima
+        self.assertIn('ASA (280 C)|RC_CARICA TOOL=1 MATERIAL=ASA SCELTO=1'
+                      '|secondary', out)
+        self.assertIn('action:prompt_show', out)
+
+    def test_carica_dopo_la_scelta(self):
+        out = self.render('RC_CARICA', {'TOOL': '1', 'MATERIAL': 'ASA',
+                                        'SCELTO': '1'})
+        self.assertIn('SET_MATERIAL LANE=extruder1 MATERIAL=ASA', out)
+        self.assertIn('_RC_CARICA_ESEGUI TOOL=1 TEMP=280.0', out)  # 250+30
+        out = self.render('RC_CARICA', {'TOOL': '0', 'MATERIAL': 'PLA'})
+        self.assertNotIn('SET_MATERIAL', out)
         self.assertIn('TEMP=250.0', out)                          # 220+30
         out = self.render('RC_CARICA', {'TOOL': '0', 'TEMP': '290'})
         self.assertIn('TEMP=300.0', out)                          # limite
+        self.assertNotIn('prompt_begin', out)
 
     def test_quadrato(self):
         out = self.render('_RC_QUADRATO', {'X': '110', 'Y': '110',
