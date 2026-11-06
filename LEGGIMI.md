@@ -1,6 +1,6 @@
 # Creator Turbo – plugin OpenCreator
 
-Versione 0.4.1 (06/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
+Versione 0.4.2 (06/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
 temperatura, cambio testina più dolce, attesa piatto, torre riconosciuta dal file, tempi. Le funzioni spente
 (carico, tabelle Z, taratura ugello, mesh di riserva) sono controllate solo a secco: 36 prove simulate, macro
 generate con lo stesso motore di Kalico.
