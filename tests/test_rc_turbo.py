@@ -75,7 +75,8 @@ class FakeConfig:
         return int(self._get(key, default))
 
     def getfloat(self, key, default, **kw):
-        return float(self._get(key, default))
+        v = self._get(key, default)
+        return None if v is None else float(v)
 
     def error(self, msg):
         return Exception(msg)
@@ -223,6 +224,16 @@ class TabellaZ(unittest.TestCase):
         turbo.taratura = {'tool': 0}
         c = turbo._correzione_z(orig, 250., 0.00045, 110., 0.2)
         self.assertAlmostEqual(c, 130 * 0.00045)
+
+    def test_piatto_caldo_regolabile(self):
+        def orig(hotend, coeff, bed, fl):
+            return ((hotend - 120.) * coeff - (0.08 if bed >= 100. else 0.)
+                    - (0.06 if fl < 0.11 else 0.))
+        turbo, *_ = make({'piatto_caldo_mm': -0.04})
+        self.assertAlmostEqual(turbo._correzione_z(orig, 265., 0.00045, 110.,
+                                                   0.2), 145 * 0.00045 - 0.04)
+        self.assertAlmostEqual(turbo._correzione_z(orig, 220., 0.00045, 60.,
+                                                   0.2), 100 * 0.00045)
 
 
 class TabellaUgello(unittest.TestCase):

@@ -97,6 +97,10 @@ class RCTurbo:
                                                     True)
         self.carico = config.getboolean('carico', False)
         self.tabella_z_piatto = config.getboolean('tabella_z_piatto', False)
+        # Al posto del -0,08 fisso di OpenCreator con piatto >= 100 C
+        # (negativo = ugello piu' vicino). Vuoto = come OpenCreator.
+        self.piatto_caldo_mm = config.getfloat('piatto_caldo_mm', None,
+                                               minval=-0.15, maxval=0.05)
         self.tabella_z_ugello = config.getboolean('tabella_z_ugello', False)
         self.riserva_mesh = config.getboolean('riserva_mesh', False)
         self.tempi = config.getboolean('tempi', True)
@@ -915,6 +919,10 @@ class RCTurbo:
             # bed=0 toglie il termine fisso di OpenCreator (-0,08 da 100 C)
             return orig(hotend, coeff, 0., first_layer) + extra + interpola(
                 self.tabella_z, bed)
+        if self.piatto_caldo_mm is not None:
+            # bed=0 toglie il -0,08 di OpenCreator, al suo posto il nostro
+            return orig(hotend, coeff, 0., first_layer) + extra + (
+                self.piatto_caldo_mm if bed >= 100. else 0.)
         return orig(hotend, coeff, bed, first_layer) + extra
 
     def _attorno_z_testina(self, vecchio, gcmd):
