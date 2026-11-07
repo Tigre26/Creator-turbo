@@ -395,11 +395,15 @@ class CambioTestina(unittest.TestCase):
 
 class AttesaDock(unittest.TestCase):
     def prova(self, nome, temp, montata='extruder', stato='printing',
-              partenza=False):
-        turbo, reactor, h, applied, gcode = make({'attesa_materiali': True})
+              partenza=False, usate=(0, 1, 2, 3), temp_testine=None):
+        turbo, reactor, h, applied, gcode = make({
+            'attesa_materiali': True,
+            'temperature_materiali': 'DEFAULT:220, PLA:220, PETG:240, ASA:250'})
         turbo._stato_stampa = lambda: stato
         turbo.in_partenza = partenza
-        turbo.temp_testine = {0: 270., 1: 255., 2: 215., 3: 210.}
+        turbo.temp_testine = (temp_testine if temp_testine is not None
+                              else {0: 270., 1: 255., 2: 215., 3: 210.})
+        turbo.usate_stampa = set(usate)
         turbo.materiali_file = ['ASA', 'PETG', 'PLA', 'PLA']
         th = mock.Mock()
         th.get_extruder.return_value.get_name.return_value = montata
@@ -414,12 +418,23 @@ class AttesaDock(unittest.TestCase):
         self.assertEqual(self.prova('extruder', 190., montata='extruder3'),
                          170.)
 
+    def test_attesa_mandata_ancora_montata(self):
+        # Orca: 'M104 S175 T1 ;cooldown' prima del cambio, T1 ancora montata
+        self.assertEqual(self.prova('extruder1', 175., montata='extruder1'),
+                         160.)
+
+    def test_senza_temperature_dalla_partenza(self):
+        # temperature di stampa mancanti: si usa la tabella dei materiali
+        self.assertEqual(self.prova('extruder1', 175., temp_testine={}), 160.)
+        self.assertEqual(self.prova('extruder1', 240., temp_testine={}), 240.)
+
     def test_pla_gia_sotto(self):
         self.assertEqual(self.prova('extruder2', 135.), 135.)
 
     def test_non_tocca(self):
         self.assertEqual(self.prova('extruder1', 255.), 255.)   # preriscaldo
-        self.assertEqual(self.prova('extruder', 190.), 190.)    # montata
+        self.assertEqual(self.prova('extruder', 270.), 270.)    # montata
+        self.assertEqual(self.prova('extruder', 190., usate=(0,)), 190.)  # 1 colore
         self.assertEqual(self.prova('extruder1', 175., stato='standby'), 175.)
         self.assertEqual(self.prova('extruder1', 175., partenza=True), 175.)
         self.assertEqual(self.prova('extruder1', 0.), 0.)

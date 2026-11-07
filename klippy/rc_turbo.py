@@ -608,17 +608,21 @@ class RCTurbo:
         if (not self.attesa_materiali or self.in_partenza or temp <= 0.
                 or self._stato_stampa() != 'printing'):
             return temp
-        nome = heater.get_name()
-        tool = tool_of(nome)
-        toolhead = self.printer.lookup_object('toolhead')
-        if toolhead.get_extruder().get_name() == nome:
+        # Orca manda l'attesa ("cooldown") poco PRIMA del cambio, quando la
+        # testina e' ancora montata: per questo non si guarda quale e'
+        # montata, ma serve una stampa a piu' testine e un valore di attesa
+        # (almeno 30 C sotto la temperatura di stampa).
+        if len(self.usate_stampa) < 2:
             return temp
-        stampa = self.temp_testine.get(tool, 0.)
-        if not stampa or temp > stampa - 30.:
-            return temp
+        tool = tool_of(heater.get_name())
         if tool >= len(self.materiali_file):
             return temp
-        limite = self.temp_attesa.get(self.materiali_file[tool])
+        materiale = self.materiali_file[tool]
+        stampa = (self.temp_testine.get(tool, 0.)
+                  or self.materiali.get(materiale, 0.))
+        if not stampa or temp > stampa - 30.:
+            return temp
+        limite = self.temp_attesa.get(materiale)
         if limite is None or temp <= limite:
             return temp
         return limite
@@ -1462,6 +1466,8 @@ class RCTurbo:
             'tabella_z': {('%g' % k): v for k, v in self.tabella_z.items()},
             'tabella_ugello_testine': sorted(self.tabella_ugello),
             'in_coda': list(self.in_coda),
+            'materiali_file': list(self.materiali_file),
+            'temp_testine': {str(k): v for k, v in self.temp_testine.items()},
         })
         return stato
 
