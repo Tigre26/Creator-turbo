@@ -445,6 +445,51 @@ class AttesaDock(unittest.TestCase):
             ['ASA', 'PETG', 'PLA', 'PLA'])
 
 
+class RipresaCambio(unittest.TestCase):
+    def setUp(self):
+        self.turbo = make({'ripresa_cambio': True})[0]
+        self.gm = mock.Mock()
+        self.gm.absolute_extrude = False
+        self.turbo.printer.lookup_object.side_effect = (
+            lambda n, d=None: self.gm if n == 'gcode_move' else d)
+        self.turbo.materiali_file = ['PLA', 'PETG', 'PLA', 'PLA']
+
+    def g1(self, **params):
+        gcmd = mock.Mock()
+        p = {k: str(v) for k, v in params.items()}
+        gcmd.get_command_parameters.return_value = p
+        visti = []
+        self.turbo._attorno_g1(lambda g: visti.append(dict(p)), gcmd)
+        return visti[0]
+
+    def test_petg_ripresa_piu_lunga_una_volta(self):
+        self.turbo.ripresa = self.turbo._extra_ripresa(1)
+        self.assertEqual(float(self.g1(E=2.2, F=1800)['E']), 2.7)
+        self.assertEqual(float(self.g1(E=2.2)['E']), 2.2)   # solo la prima
+        self.assertEqual(self.turbo.riprese_fatte, 1)
+
+    def test_pla_niente(self):
+        self.turbo.ripresa = self.turbo._extra_ripresa(0)
+        self.assertEqual(float(self.g1(E=2.2)['E']), 2.2)
+
+    def test_non_tocca_movimenti_con_xy_o_assoluti(self):
+        self.turbo.ripresa = 0.5
+        self.assertEqual(float(self.g1(X=10, E=0.3)['E']), 0.3)
+        self.assertEqual(self.turbo.ripresa, 0.)            # annullata
+        self.turbo.ripresa = 0.5
+        self.gm.absolute_extrude = True
+        self.assertEqual(float(self.g1(E=2.2)['E']), 2.2)
+        self.turbo.ripresa = 0.5
+        self.gm.absolute_extrude = False
+        self.assertEqual(float(self.g1(E=-2.2)['E']), -2.2) # ritrazione
+        self.assertEqual(float(self.g1(E=3)['E']), 3.5)     # poi la ripresa
+        self.assertEqual(self.g1(X=5, Y=5), {'X': '5', 'Y': '5'})  # attende E
+
+    def test_limite_config(self):
+        with self.assertRaises(Exception):
+            make({'ripresa_cambio': True, 'ripresa_extra': 'PETG:3'})
+
+
 class PartenzaEFine(unittest.TestCase):
     def test_preriscaldo_solo_testine_a_100(self):
         turbo, reactor, h, applied, gcode = make(

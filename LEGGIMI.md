@@ -1,6 +1,6 @@
 # Creator Turbo – plugin OpenCreator
 
-Versione 0.5.4 (07/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
+Versione 0.5.5 (07/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
 temperatura, cambio testina più dolce, attesa piatto, torre riconosciuta dal file, tempi. Le funzioni spente
 (carico, tabelle Z, taratura ugello, mesh di riserva) sono controllate solo a secco: 46 prove simulate, macro
 generate con lo stesso motore di Kalico.
@@ -38,6 +38,7 @@ cambia questi nomi, in `klippy.log` compare "rc_turbo: comando … non trovato" 
 | `piatto_giu_fine` | acceso | A fine stampa il piatto scende di 50 mm (`piatto_giu_mm`), al massimo fino al limite di OpenCreator (Z 246) se il pezzo è alto. Serve l'interruttore "Lower Bed On End" acceso |
 | `pulizia_cambio` | spento | Stampa con torre: dopo ogni cambio testina 2 passate sul silicone davanti a destra prima della torre, per togliere la goccia fatta nel dock; ritorno allo stesso punto e alla stessa Z. Non sopra `pulizia_cambio_z_max` (120 mm) |
 | `attesa_materiali` | acceso | In stampa le testine posate nel dock stanno al massimo alla temperatura di attesa del materiale (`temperature_attesa`: PLA 140, PETG 160, ASA/ABS 170, TPU 150) invece di stampa − 80 °C: niente gocce. Materiale letto dal G-code di Orca; vale anche se Orca manda l'attesa poco prima di posare la testina; solo stampe a più testine, solo per abbassare |
+| `ripresa_cambio` | acceso | Stampa con torre: alla prima ripresa dopo un cambio (`G1 E…` di Orca) aggiunge `ripresa_extra` mm per il materiale (PETG +0,5) che ha colato nel dock e riparte con l'ugello mezzo vuoto. Vale per tutti i profili; solo una volta per cambio, solo estrusione relativa, massimo 2 mm |
 | `piatto_caldo_mm` | −0,01 | Con il piatto da 100 °C in su sostituisce il −0,08 mm fisso di OpenCreator (negativo = ugello più vicino). Primo strato ASA ancora schiacciato → verso 0; linee staccate → più negativo |
 
 Limiti di temperatura applicati subito: ugelli 320 °C, piatto 125 °C, camera 70 °C.

@@ -110,6 +110,16 @@ class RCTurbo:
         self.attesa_materiali = config.getboolean('attesa_materiali', False)
         self.temp_attesa = leggi_materiali(config.get(
             'temperature_attesa', 'PLA:140, PETG:160, ASA:170, ABS:170'))
+        # Dopo un cambio con torre: mm in piu' alla prima ripresa (de-retract)
+        # per il materiale che nel dock ha colato e lascia l'ugello mezzo vuoto
+        self.ripresa_cambio = config.getboolean('ripresa_cambio', False)
+        self.ripresa_extra = leggi_materiali(config.get(
+            'ripresa_extra', 'PETG:0.5'))
+        for k, v in self.ripresa_extra.items():
+            if not 0. <= v <= 2.:
+                raise config.error('ripresa_extra %s: tra 0 e 2 mm' % k)
+        self.ripresa = 0.
+        self.riprese_fatte = 0
         self.pulizia_cambio_z_max = config.getfloat('pulizia_cambio_z_max',
                                                     120., minval=0.)
         self.tabella_z_piatto = config.getboolean('tabella_z_piatto', False)
@@ -273,6 +283,8 @@ class RCTurbo:
         self._aggancia('C5_HOME_FOR_PRINT', self._attorno_homing)
         self._aggancia('C5_LOWER_BED', self._attorno_piatto_giu)
         self._aggancia('BED_MESH_CALIBRATE', self._attorno_mesh)
+        if self.ripresa_cambio:
+            self._aggancia('G1', self._attorno_g1)
         for nome, etichetta in (('LINE_PURGE', 'linea di innesco'),
                                 ('C5_TOOL_PURGE', 'spurgo')):
             self._aggancia(nome, self._solo_tempo(etichetta))
@@ -637,6 +649,8 @@ class RCTurbo:
         tool = int(p.get('TOOL', '0') or 0)
         hotend = float(p.get('HOTEND', '0') or 0)
         self.temp_testine = {}
+        self.ripresa = 0.
+        self.riprese_fatte = 0
         self.mesh_fatta = False
         for i in range(4):
             try:
@@ -707,8 +721,11 @@ class RCTurbo:
         vecchio(gcmd)
         if tool is not None:
             self.ultima_testina = tool
+        self.ripresa = 0.
         if not in_stampa or tool is None or stessa:
             return
+        if self.ripresa_cambio and self._torre():
+            self.ripresa = self._extra_ripresa(tool)
         if self.tempi:
             self._attendi_movimenti()
             durata = self._ora() - inizio
@@ -744,6 +761,35 @@ class RCTurbo:
             self._registra_tempo('spurgo testina %d (%s)' % (tool + 1, motivo),
                                  self._ora() - inizio)
 
+    def _extra_ripresa(self, tool):
+        if tool >= len(self.materiali_file):
+            return 0.
+        return self.ripresa_extra.get(self.materiali_file[tool], 0.)
+
+    def _attorno_g1(self, vecchio, gcmd):
+        # Solo il primo movimento con E dopo un cambio: se e' la ripresa di
+        # Orca (solo E, positiva, estrusione relativa) aggiunge i mm in piu'.
+        # Qualunque altro movimento con E annulla senza toccare niente.
+        if self.ripresa:
+            p = gcmd.get_command_parameters()
+            if 'E' in p:
+                try:
+                    e = float(p['E'])
+                except ValueError:
+                    e = 0.
+                solo_e = not any(k in p for k in ('X', 'Y', 'Z'))
+                if solo_e and e < 0.:
+                    # ritrazione prima della ripresa: si aspetta la ripresa
+                    return vecchio(gcmd)
+                extra, self.ripresa = self.ripresa, 0.
+                gm = self.printer.lookup_object('gcode_move', None)
+                if (e > 0. and solo_e
+                        and gm is not None
+                        and getattr(gm, 'absolute_extrude', True) is False):
+                    p['E'] = '%.5f' % (e + extra)
+                    self.riprese_fatte += 1
+        return vecchio(gcmd)
+
     def _pulisci_dopo_cambio(self, tool):
         # La testina posata nel dock, mentre Orca la preriscalda, fa una goccia
         # sull'ugello: senza pulizia cade sul piatto o sul pezzo andando alla
@@ -766,6 +812,7 @@ class RCTurbo:
                                  self._ora() - inizio)
 
     def _attorno_fine(self, vecchio, gcmd):
+        self.ripresa = 0.
         if self.inizio_stampa is not None and self.usate_stampa:
             stats = self.printer.lookup_object('print_stats', None)
             durata = 0.
@@ -1446,6 +1493,10 @@ class RCTurbo:
                                           self._testo_ugello()),
             'mesh di riserva: %s ("%s")' % (self.riserva_mesh,
                                             self.mesh_riserva),
+            'ripresa dopo il cambio: %s (%s; fatte in questa stampa: %d)' % (
+                self.ripresa_cambio, ', '.join('%s +%g mm' % kv for kv in
+                                               sorted(self.ripresa_extra.items())),
+                self.riprese_fatte),
             'tempi: %s' % self.tempi,
             'temperature massime: ' + massimi,
             'ugelli in coda: %s' % (', '.join(self.in_coda) or 'nessuno'),
@@ -1467,6 +1518,7 @@ class RCTurbo:
             'tabella_ugello_testine': sorted(self.tabella_ugello),
             'in_coda': list(self.in_coda),
             'materiali_file': list(self.materiali_file),
+            'riprese_fatte': self.riprese_fatte,
             'temp_testine': {str(k): v for k, v in self.temp_testine.items()},
         })
         return stato
