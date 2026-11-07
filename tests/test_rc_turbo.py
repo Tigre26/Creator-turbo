@@ -369,6 +369,29 @@ class CambioTestina(unittest.TestCase):
         turbo._attorno_cambio(lambda x: None, g(3))     # di nuovo la stessa
         self.assertEqual(len(turbo.cambi), 1)
 
+    def prova_torre(self, z, attiva=True):
+        turbo, reactor, h, applied, gcode = make(
+            {'tempi': False, 'pulizia_cambio': attiva})
+        turbo._stato_stampa = lambda: 'printing'
+        turbo.torre_file, turbo.torre_forzata = True, None
+        turbo.ultima_testina, turbo.pronte = 0, {0}
+        gm = mock.Mock()
+        gm.get_status.return_value = {'gcode_position': [0., 0., z, 0.]}
+        turbo.printer.lookup_object.side_effect = (
+            lambda n, d=None: gm if n == 'gcode_move' else mock.Mock())
+        gcode.run_script_from_command.reset_mock()
+        m = mock.Mock()
+        m.get_int.side_effect = lambda k, d=None, **kw: 2
+        turbo._attorno_cambio(lambda x: None, m)
+        return [c[0][0] for c in gcode.run_script_from_command.call_args_list]
+
+    def test_pulizia_con_torre(self):
+        self.assertEqual(self.prova_torre(10.), ['_RC_PULIZIA_CAMBIO'])
+
+    def test_pulizia_spenta_o_troppo_alto(self):
+        self.assertEqual(self.prova_torre(10., attiva=False), [])
+        self.assertEqual(self.prova_torre(150.), [])
+
 
 class PartenzaEFine(unittest.TestCase):
     def test_preriscaldo_solo_testine_a_100(self):
@@ -649,6 +672,20 @@ class Macro(unittest.TestCase):
         out = self.linea([[[100, 100], [130, 100], [130, 130], [100, 130]]],
                          {'MARGIN': '18'})
         self.assertIn('G0 X226.0 Y13.0', out)
+
+    def test_pulizia_cambio_torna_al_punto(self):
+        p = self.printer()
+        p['toolhead']['max_velocity'] = 600.
+        p['gcode_move']['gcode_position'] = {'x': 120., 'y': 200., 'z': 12.4}
+        out = self.macro('_RC_PULIZIA_CAMBIO').render(
+            printer=p, params={}, action_respond_info=lambda m: '')
+        r = [l.strip() for l in out.splitlines() if l.strip().startswith('G1')]
+        self.assertEqual(r[0], 'G1 Z13.4 F600')
+        self.assertEqual(r[1], 'G1 X250.0 Y13.8 F18000.0')
+        self.assertIn('G1 Z1.7 F600', r)
+        self.assertEqual(r[-3:], ['G1 X250.0 F3000', 'G1 X120.0 Y200.0 F18000.0',
+                                  'G1 Z12.4 F600'])
+        self.assertFalse(any(' E' in l for l in r))
 
     def test_riscaldo_sopra_il_silicone(self):
         p = self.printer()

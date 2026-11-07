@@ -1,8 +1,8 @@
 # Creator Turbo – plugin OpenCreator
 
-Versione 0.5.0 (06/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
+Versione 0.5.1 (07/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
 temperatura, cambio testina più dolce, attesa piatto, torre riconosciuta dal file, tempi. Le funzioni spente
-(carico, tabelle Z, taratura ugello, mesh di riserva) sono controllate solo a secco: 43 prove simulate, macro
+(carico, tabelle Z, taratura ugello, mesh di riserva) sono controllate solo a secco: 46 prove simulate, macro
 generate con lo stesso motore di Kalico.
 
 ## Cosa c'è
@@ -36,6 +36,7 @@ cambia questi nomi, in `klippy.log` compare "rc_turbo: comando … non trovato" 
 | `riserva_mesh` | spento | A livellamento spento carica `rc_base` invece di `default` |
 | `preriscaldo_partenza` | acceso | Dall'homing fino alla mesh le testine che OpenCreator porta a 100 °C salgono a 150 °C (mai oltre la temperatura di stampa): partenza più corta, stesse 2 testine |
 | `piatto_giu_fine` | acceso | A fine stampa il piatto scende di 50 mm (`piatto_giu_mm`), al massimo fino al limite di OpenCreator (Z 246) se il pezzo è alto. Serve l'interruttore "Lower Bed On End" acceso |
+| `pulizia_cambio` | acceso | Stampa con torre: dopo ogni cambio testina 2 passate sul silicone davanti a destra prima della torre, per togliere la goccia fatta nel dock; ritorno allo stesso punto e alla stessa Z. Non sopra `pulizia_cambio_z_max` (120 mm) |
 | `piatto_caldo_mm` | −0,01 | Con il piatto da 100 °C in su sostituisce il −0,08 mm fisso di OpenCreator (negativo = ugello più vicino). Primo strato ASA ancora schiacciato → verso 0; linee staccate → più negativo |
 
 Limiti di temperatura applicati subito: ugelli 320 °C, piatto 125 °C, camera 70 °C.

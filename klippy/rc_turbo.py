@@ -96,6 +96,9 @@ class RCTurbo:
         self.spurgo_prima_presa = config.getboolean('spurgo_prima_presa',
                                                     True)
         self.carico = config.getboolean('carico', False)
+        self.pulizia_cambio = config.getboolean('pulizia_cambio', False)
+        self.pulizia_cambio_z_max = config.getfloat('pulizia_cambio_z_max',
+                                                    120., minval=0.)
         self.tabella_z_piatto = config.getboolean('tabella_z_piatto', False)
         # Al posto del -0,08 fisso di OpenCreator con piatto >= 100 C
         # (negativo = ugello piu' vicino). Vuoto = come OpenCreator.
@@ -671,6 +674,7 @@ class RCTurbo:
         # senza torre si spurga nello scivolo come riserva.
         if self._torre():
             lunghezza, motivo = 0., 'torre attiva'
+            self._pulisci_dopo_cambio(tool)
         elif tool not in self.pronte:
             lunghezza, motivo = self.valori['spurgo_prima_mm'], \
                 'prima presa senza torre'
@@ -692,6 +696,27 @@ class RCTurbo:
             self.in_cambio = False
         if self.tempi:
             self._registra_tempo('spurgo testina %d (%s)' % (tool + 1, motivo),
+                                 self._ora() - inizio)
+
+    def _pulisci_dopo_cambio(self, tool):
+        # La testina posata nel dock, mentre Orca la preriscalda, fa una goccia
+        # sull'ugello: senza pulizia cade sul piatto o sul pezzo andando alla
+        # torre. Con pulizia_cambio: passata sul silicone prima della torre.
+        if not self.pulizia_cambio:
+            return
+        z = self.printer.lookup_object('gcode_move').get_status(
+            self._ora())['gcode_position'][2]
+        if z > self.pulizia_cambio_z_max:
+            return
+        self.in_cambio = True
+        inizio = self._ora()
+        try:
+            self.gcode.run_script_from_command('_RC_PULIZIA_CAMBIO')
+            self._attendi_movimenti()
+        finally:
+            self.in_cambio = False
+        if self.tempi:
+            self._registra_tempo('pulizia testina %d' % (tool + 1),
                                  self._ora() - inizio)
 
     def _attorno_fine(self, vecchio, gcmd):
