@@ -393,6 +393,43 @@ class CambioTestina(unittest.TestCase):
         self.assertEqual(self.prova_torre(150.), [])
 
 
+class AttesaDock(unittest.TestCase):
+    def prova(self, nome, temp, montata='extruder', stato='printing',
+              partenza=False):
+        turbo, reactor, h, applied, gcode = make({'attesa_materiali': True})
+        turbo._stato_stampa = lambda: stato
+        turbo.in_partenza = partenza
+        turbo.temp_testine = {0: 270., 1: 255., 2: 215., 3: 210.}
+        turbo.materiali_file = ['ASA', 'PETG', 'PLA', 'PLA']
+        th = mock.Mock()
+        th.get_extruder.return_value.get_name.return_value = montata
+        turbo.printer.lookup_object.side_effect = (
+            lambda n, d=None: th if n == 'toolhead' else d)
+        heater = mock.Mock()
+        heater.get_name.return_value = nome
+        return turbo._temp_attesa(heater, temp)
+
+    def test_petg_e_asa_piu_freddi_nel_dock(self):
+        self.assertEqual(self.prova('extruder1', 175.), 160.)
+        self.assertEqual(self.prova('extruder', 190., montata='extruder3'),
+                         170.)
+
+    def test_pla_gia_sotto(self):
+        self.assertEqual(self.prova('extruder2', 135.), 135.)
+
+    def test_non_tocca(self):
+        self.assertEqual(self.prova('extruder1', 255.), 255.)   # preriscaldo
+        self.assertEqual(self.prova('extruder', 190.), 190.)    # montata
+        self.assertEqual(self.prova('extruder1', 175., stato='standby'), 175.)
+        self.assertEqual(self.prova('extruder1', 175., partenza=True), 175.)
+        self.assertEqual(self.prova('extruder1', 0.), 0.)
+
+    def test_materiali_dal_file(self):
+        self.assertEqual(rc.materiali_da_testo(
+            '; filament_type = ASA;PETG;PLA;PLA\n'),
+            ['ASA', 'PETG', 'PLA', 'PLA'])
+
+
 class PartenzaEFine(unittest.TestCase):
     def test_preriscaldo_solo_testine_a_100(self):
         turbo, reactor, h, applied, gcode = make(

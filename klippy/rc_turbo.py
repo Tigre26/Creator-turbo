@@ -70,6 +70,16 @@ def torre_da_testo(testo):
     return trovato
 
 
+def materiali_da_testo(testo):
+    """'; filament_type = ASA;PETG;PLA;PLA' -> ['ASA', 'PETG', 'PLA', 'PLA']."""
+    trovati = None
+    for m in re.finditer(r'^[ \t]*;[ \t]*filament_type[ \t]*=[ \t]*(.+)$',
+                         testo, re.M):
+        trovati = [v.strip().strip('"').upper()
+                   for v in m.group(1).split(';')]
+    return trovati or []
+
+
 def leggi_materiali(testo):
     """'PLA:220, PETG:240' -> {'PLA': 220.0, 'PETG': 240.0}."""
     tabella = {}
@@ -97,6 +107,9 @@ class RCTurbo:
                                                     True)
         self.carico = config.getboolean('carico', False)
         self.pulizia_cambio = config.getboolean('pulizia_cambio', False)
+        self.attesa_materiali = config.getboolean('attesa_materiali', False)
+        self.temp_attesa = leggi_materiali(config.get(
+            'temperature_attesa', 'PLA:140, PETG:160, ASA:170, ABS:170'))
         self.pulizia_cambio_z_max = config.getfloat('pulizia_cambio_z_max',
                                                     120., minval=0.)
         self.tabella_z_piatto = config.getboolean('tabella_z_piatto', False)
@@ -181,6 +194,7 @@ class RCTurbo:
         self.pronte = set()          # testine gia' spurgate in questa stampa
         self.temp_testine = {}       # temperature di stampa dal file
         self.torre_file = None       # dal G-code
+        self.materiali_file = []     # filament_type dal G-code, per testina
         self.torre_forzata = None    # RC_TORRE ATTIVA=0/1
         self.in_coda = collections.OrderedDict()   # nome -> (heater, temp)
         self.camera = {'target_originale': None, 'raggiunto': False,
@@ -451,6 +465,7 @@ class RCTurbo:
         if nome not in EXTRUDERS:
             return self.orig_set_temperature(heater, temp, wait)
         temp = self._temp_preriscaldo(nome, temp)
+        temp = self._temp_attesa(heater, temp)
         # Un nuovo comando sostituisce quello in coda per lo stesso ugello
         self.in_coda.pop(nome, None)
         attuale, _ = heater.get_temp(self._ora())
@@ -567,19 +582,46 @@ class RCTurbo:
         return sorted({int(x) for x in testo.split(',')
                        if x.strip() in ('0', '1', '2', '3')})
 
-    def _torre_dal_file(self):
+    def _coda_file(self):
         sd = self.printer.lookup_object('virtual_sdcard', None)
         percorso = sd.file_path() if sd is not None else None
         if not percorso:
-            return None
+            return ''
         try:
             with open(percorso, 'rb') as f:
                 f.seek(0, os.SEEK_END)
                 f.seek(max(0, f.tell() - CODA_FILE))
-                testo = f.read().decode('utf-8', 'replace')
+                return f.read().decode('utf-8', 'replace')
         except OSError:
-            return None
-        return torre_da_testo(testo)
+            return ''
+
+    def _torre_dal_file(self):
+        testo = self._coda_file()
+        self.materiali_file = materiali_da_testo(testo)
+        return torre_da_testo(testo) if testo else None
+
+    def _temp_attesa(self, heater, temp):
+        # In stampa Orca mette le testine posate a (stampa - 80 C): il PETG
+        # a 175 e l'ASA a 190 colano nel dock. Qui al massimo la temperatura
+        # di attesa del materiale. Solo per abbassare, solo testine non
+        # montate, mai durante la partenza (ci pensa OpenCreator).
+        if (not self.attesa_materiali or self.in_partenza or temp <= 0.
+                or self._stato_stampa() != 'printing'):
+            return temp
+        nome = heater.get_name()
+        tool = tool_of(nome)
+        toolhead = self.printer.lookup_object('toolhead')
+        if toolhead.get_extruder().get_name() == nome:
+            return temp
+        stampa = self.temp_testine.get(tool, 0.)
+        if not stampa or temp > stampa - 30.:
+            return temp
+        if tool >= len(self.materiali_file):
+            return temp
+        limite = self.temp_attesa.get(self.materiali_file[tool])
+        if limite is None or temp <= limite:
+            return temp
+        return limite
 
     def _torre(self):
         if self.torre_forzata is not None:
