@@ -1,6 +1,6 @@
 # Creator Turbo – plugin OpenCreator
 
-Versione 0.5.6 (13/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
+Versione 0.5.7 (13/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
 temperatura, cambio testina più dolce, attesa piatto, torre riconosciuta dal file, tempi. Le funzioni spente
 (carico, tabelle Z, taratura ugello, mesh di riserva) sono controllate solo a secco: 46 prove simulate, macro
 generate con lo stesso motore di Kalico.
@@ -29,7 +29,7 @@ cambia questi nomi, in `klippy.log` compare "rc_turbo: comando … non trovato" 
 | `limite_ugelli` | acceso | Max 2 ugelli in riscaldamento insieme; il terzo aspetta in coda e parte da solo |
 | `guardia_camera` | acceso | Riscaldatore camera al massimo e temperatura in calo lento → abbassa il target (max −10 °C, mai sotto 45) prima del blocco; calo rapido = guasto possibile, decide la protezione |
 | `tempi` | acceso | `[tempi]` in console per homing, attesa piatto, mesh, linea, spurgo, cambi, totale; tutto anche in `rc_tempi.csv` |
-| `spurgo_prima_presa` | acceso | 1 colore → solo linea di innesco. Più colori con torre (letta dal file di Orca) → la prima testina con la linea, le altre sulla torre, nessuno spurgo nello scivolo. Torre spenta (anche quando Orca stampa **per oggetto**: lascia acceso l'interruttore ma la torre non la genera) → riserva: 25 mm nello scivolo + silicone alla prima presa, 12 mm alle successive. La passata sul silicone avviene solo con `pulizia_passate` > 0 |
+| `spurgo_prima_presa` | acceso | 1 colore → solo linea di innesco. Più colori con torre (letta dal file di Orca) → la prima testina con la linea, le altre sulla torre, nessuno spurgo nello scivolo. Torre spenta (anche quando Orca stampa **per oggetto**: lascia acceso l'interruttore ma la torre non la genera) → riserva: 25 mm nello scivolo + silicone alla prima presa, 12 mm alle successive. Dalla 0.5.7 la passata sul tergino usa le coordinate di `C5_NOZZLE_WIPE_TEST` di OpenCreator (X 264, Y 2, Z 2,462, solo verso +X, max 10 mm) e fa 2 passate |
 | `carico` | acceso (dal 05/11/2026, in prova) | `CARICA_1…CARICA_4`, anche dal "Load" dello schermo |
 | `tabella_z_piatto` | spento | Z offset dalla tabella tarata con `RC_TARA_Z` (servono ≥ 2 punti) |
 | `tabella_z_ugello` | spento | Z offset dell'ugello per testina dalla tabella di `RC_TARA_UGELLO` invece della stima (T − 120) × 0,00045 |

@@ -817,8 +817,26 @@ class Macro(unittest.TestCase):
     def test_pulisci_non_scende_in_stampa(self):
         out = self.render('_RC_PULISCI', {})
         self.assertIn('G1 Z40.2 F600', out)        # esce alla quota del pezzo
-        self.assertIn('G1 X266.5 F3000', out)
         self.assertIn('SET_FAN_SPEED FAN=fanM106 SPEED=0.4', out)  # ripristino
+
+    def test_pulisci_usa_il_tergino_di_opencreator(self):
+        # C5_NOZZLE_WIPE_TEST: X250 Y250 -> Y2 -> X264 -> Z2.462
+        out = self.render('_RC_PULISCI', {'PASSATE': '2'})
+        self.assertIn('G1 X250.0 Y250.0 F6000', out)
+        self.assertIn('G1 Y2.0 F6000', out)
+        self.assertIn('G1 X264.0 F3000', out)
+        self.assertIn('G1 Z2.462 F600', out)
+        self.assertNotIn('266.5', out)             # non il punto di raffredd.
+        self.assertNotIn('13.8', out)
+        # si scende solo dopo essere arrivati sul tergino
+        self.assertLess(out.index('G1 X264.0 F3000'), out.index('Z2.462'))
+
+    def test_pulisci_mai_in_meno_x_e_dx_limitato(self):
+        out = self.render('_RC_PULISCI', {'PASSATE': '1', 'DX': '50'})
+        quote = [float(r.split('X')[1].split()[0])
+                 for r in out.split('\n') if r.startswith('G1 X2')]
+        self.assertGreaterEqual(min(quote[2:]), 264.)   # mai sotto il tergino
+        self.assertLessEqual(max(quote), 274.)          # DX troncato a 10
 
     def test_carica_chiede_materiale(self):
         out = self.render('RC_CARICA', {'TOOL': '1'})

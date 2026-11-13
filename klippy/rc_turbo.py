@@ -177,6 +177,10 @@ class RCTurbo:
                 ('spurgo_prima_mm', 25.), ('spurgo_cambio_mm', 12.),
                 ('spurgo_velocita', 3.), ('alzata_cambio', 2.),
                 ('pulizia_passate', 0), ('pulizia_dx', 5.),
+                # Tergino: coordinate di C5_NOZZLE_WIPE_TEST di
+                # OpenCreator, non il punto di raffreddamento.
+                ('pulizia_x', 264.), ('pulizia_y', 2.),
+                ('pulizia_z', 2.462),
                 ('pulizia_velocita', 3000.), ('pulizia_ventola', 0.),
                 ('pulizia_raffredda', 0.), ('pulizia_quota_uscita', 10.),
                 ('carico_aumento', 30.), ('carico_temp_max', 300.),
