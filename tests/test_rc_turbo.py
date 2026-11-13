@@ -838,15 +838,15 @@ class Macro(unittest.TestCase):
 
     def test_pulisci_z_regolabile_ma_limitata(self):
         self.assertIn('G1 Z2.2 F600', self.render('_RC_PULISCI', {'Z': '2.2'}))
-        # sotto 1,8 non si scende, qualunque cosa si chieda
-        self.assertIn('G1 Z1.8 F600', self.render('_RC_PULISCI', {'Z': '0.5'}))
+        # sotto 1,0 non si scende, qualunque cosa si chieda
+        self.assertIn('G1 Z1.0 F600', self.render('_RC_PULISCI', {'Z': '0.5'}))
         self.assertIn('G1 Z5.0 F600', self.render('_RC_PULISCI', {'Z': '99'}))
 
     def test_prova_pulizia_dice_la_z_vera(self):
         detti = []
         self.render('RC_PROVA_PULIZIA', {'TESTINA': '1', 'Z': '0'},
                     detti=detti)
-        self.assertIn('Pulizia fatta a Z=1.800 (chiesto 0.000',
+        self.assertIn('Pulizia fatta a Z=1.000 (chiesto 0.000',
                       ' '.join(detti))
 
     def test_pulisci_mai_in_meno_x_e_dx_limitato(self):
