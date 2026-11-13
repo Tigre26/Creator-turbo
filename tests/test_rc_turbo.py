@@ -732,7 +732,7 @@ class Macro(unittest.TestCase):
             'AFC_lane extruder0': {'extruder': 'extruder0', 'material': ''},
         }
 
-    def render(self, nome, params, printer=None):
+    def render(self, nome, params, printer=None, detti=None):
         def errore(msg):
             raise RuntimeError(msg)
         p = printer or self.printer()
@@ -740,9 +740,14 @@ class Macro(unittest.TestCase):
         class P(dict):
             def __contains__(self, k):
                 return dict.__contains__(self, k)
+
+        def dillo(m):
+            if detti is not None:
+                detti.append(m)
+            return ''
         return self.macro(nome).render(
             printer=P(p), params=params, rawparams='',
-            action_raise_error=errore, action_respond_info=lambda m: '')
+            action_raise_error=errore, action_respond_info=dillo)
 
     def linea(self, poligoni, params=None):
         p = self.printer()
@@ -836,6 +841,13 @@ class Macro(unittest.TestCase):
         # sotto 1,8 non si scende, qualunque cosa si chieda
         self.assertIn('G1 Z1.8 F600', self.render('_RC_PULISCI', {'Z': '0.5'}))
         self.assertIn('G1 Z5.0 F600', self.render('_RC_PULISCI', {'Z': '99'}))
+
+    def test_prova_pulizia_dice_la_z_vera(self):
+        detti = []
+        self.render('RC_PROVA_PULIZIA', {'TESTINA': '1', 'Z': '0'},
+                    detti=detti)
+        self.assertIn('Pulizia fatta a Z=1.800 (chiesto 0.000',
+                      ' '.join(detti))
 
     def test_pulisci_mai_in_meno_x_e_dx_limitato(self):
         out = self.render('_RC_PULISCI', {'PASSATE': '1', 'DX': '50'})

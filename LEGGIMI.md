@@ -1,6 +1,6 @@
 # Creator Turbo – plugin OpenCreator
 
-Versione 0.5.8 (13/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
+Versione 0.5.9 (13/11/2026). **Installato sulla Creator 5 Pro il 05/11/2026**: provati in stampa limiti di
 temperatura, cambio testina più dolce, attesa piatto, torre riconosciuta dal file, tempi. Le funzioni spente
 (carico, tabelle Z, taratura ugello, mesh di riserva) sono controllate solo a secco: 46 prove simulate, macro
 generate con lo stesso motore di Kalico.
@@ -55,7 +55,7 @@ Limiti di temperatura applicati subito: ugelli 320 °C, piatto 125 °C, camera 7
 - `TARA_UGELLO_1…TARA_UGELLO_4`, `TARA_UGELLO_TUTTE` – **procedura guidata a finestre** (Fluidd: Macro; schermo: Console → Macro): avvisa se c'è filamento, fa l'homing con il piatto montato, poi chiede di togliere il piatto, alla fine dice l'esito e ricorda di rimontarlo. La prima volta da Fluidd, per leggere i messaggi e avere l'arresto di emergenza a portata.
 - `RC_MESH_BASE BED=60` – mesh completa a piatto stabile salvata come `rc_base` (poi `SAVE_CONFIG`).
 - `RC_PROVA_SONDA` – 10 letture al centro: dice se si può passare a 1 tocco per punto.
-- `RC_PROVA_PULIZIA [TESTINA=1] [PASSATE=] [DX=] [Z=]` – a freddo, porta la testina sul tergino davanti a destra (X 264, Y 2, Z `pulizia_z`). `Z=` prova un'altezza diversa senza reinstallare: limitato tra 1,8 e 5 mm. Trovata l'altezza buona, va messa in `pulizia_z`.
+- `RC_PROVA_PULIZIA [TESTINA=1] [PASSATE=] [DX=] [Z=]` – a freddo, porta la testina sul tergino davanti a destra (X 264, Y 2, Z `pulizia_z`). `Z=` prova un'altezza diversa senza reinstallare: limitato tra 1,8 e 5 mm, e il messaggio dice la quota **usata davvero** oltre a quella chiesta. Provato sulla macchina il 13/11/2026: 1,96 troppo alto, **1,8 buono** (valore di `pulizia_z`); sotto 1,8 non ancora provato. Trovata l'altezza buona, va messa in `pulizia_z`.
 - `RC_TORRE ATTIVA=1|0|AUTO` – forza la torre per la stampa in corso.
 
 ## Installazione (dopo OpenCreator e la prima stampa di prova)
