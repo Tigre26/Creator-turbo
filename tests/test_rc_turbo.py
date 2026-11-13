@@ -831,6 +831,12 @@ class Macro(unittest.TestCase):
         # si scende solo dopo essere arrivati sul tergino
         self.assertLess(out.index('G1 X264.0 F3000'), out.index('Z2.462'))
 
+    def test_pulisci_z_regolabile_ma_limitata(self):
+        self.assertIn('G1 Z2.2 F600', self.render('_RC_PULISCI', {'Z': '2.2'}))
+        # sotto 1,8 non si scende, qualunque cosa si chieda
+        self.assertIn('G1 Z1.8 F600', self.render('_RC_PULISCI', {'Z': '0.5'}))
+        self.assertIn('G1 Z5.0 F600', self.render('_RC_PULISCI', {'Z': '99'}))
+
     def test_pulisci_mai_in_meno_x_e_dx_limitato(self):
         out = self.render('_RC_PULISCI', {'PASSATE': '1', 'DX': '50'})
         quote = [float(r.split('X')[1].split()[0])
