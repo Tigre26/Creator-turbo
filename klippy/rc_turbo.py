@@ -62,11 +62,23 @@ def interpola(punti, x):
 
 
 def torre_da_testo(testo):
-    """1/0 se il G-code dice se la torre di spurgo e' attiva, None se no."""
+    """1/0 se il G-code dice se la torre di spurgo e' attiva, None se no.
+
+    Con 'print_sequence = by object' Orca lascia acceso enable_prime_tower
+    ma la torre NON la genera (una sola torre non servirebbe: ne servirebbe
+    una per oggetto). Senza questo controllo il plugin crede che la torre
+    inneschi l'ugello e salta lo spurgo di riserva: primo layer difettoso.
+    """
     trovato = None
     for m in re.finditer(r'^[ \t]*;[ \t]*(enable_prime_tower|wipe_tower)'
                          r'[ \t]*=[ \t]*(\S+)', testo, re.M):
         trovato = m.group(2).strip().lower() in ('1', 'true')
+    if trovato:
+        for m in re.finditer(r'^[ \t]*;[ \t]*(print_sequence|complete_objects)'
+                             r'[ \t]*=[ \t]*(.+)$', testo, re.M):
+            v = m.group(2).strip().strip('"').lower()
+            if 'object' in v or v in ('1', 'true'):
+                trovato = False
     return trovato
 
 

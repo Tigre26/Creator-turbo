@@ -125,6 +125,13 @@ class Funzioni(unittest.TestCase):
         self.assertTrue(rc.torre_da_testo("; enable_prime_tower = 1\n"))
         self.assertFalse(rc.torre_da_testo("; enable_prime_tower = 0\n"))
         self.assertIsNone(rc.torre_da_testo("; altro = 1\n"))
+        # per oggetto: Orca lascia acceso l'interruttore ma non la genera
+        self.assertFalse(rc.torre_da_testo(
+            "; enable_prime_tower = 1\n; print_sequence = by object\n"))
+        self.assertTrue(rc.torre_da_testo(
+            "; enable_prime_tower = 1\n; print_sequence = by layer\n"))
+        self.assertFalse(rc.torre_da_testo(
+            "; enable_prime_tower = 1\n; complete_objects = 1\n"))
 
     def test_materiali(self):
         t = rc.leggi_materiali("DEFAULT:220, pla:220,\n ASA:250")
